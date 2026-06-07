@@ -10,7 +10,7 @@ This project is open-source and licensed under the **GNU General Public License 
 
 ### Original Work Notice
 * This repository contains modified code based on an original project developed by the **Original Author**.
-* Original Repository: `[Orijinal reponun linkini bura yapışdır]`
+* Original Repository: `[https://github.com/omltcat/mc-version-mods-checker]`
 * All original copyright notices, legal disclaimers, and headers in the source code have been strictly preserved in compliance with Section 4 and 5 of the GNU GPLv3.
 
 ### Modifications
