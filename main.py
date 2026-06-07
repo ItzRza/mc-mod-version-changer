@@ -31,7 +31,7 @@ LOADER = input("Enter the mod/plugin platform you use (loader) (e.g., fabric, fo
 TARGET = input("Enter the Minecraft version you want to check for (target): ").strip()
 
 MODS_DIR = None
-if CHOICE == '1':
+if CHOICE in ['1', '2']:
     INSTANCE = input("Enter the path to your minecraft installation directory (instance): ").strip()
     if LOADER in ['fabric', 'quilt', 'forge', 'neoforge']:
         MODS_DIR = pathlib.Path(INSTANCE) / 'mods'
@@ -40,7 +40,7 @@ if CHOICE == '1':
     else:
         print(f"Unknown loader: '{LOADER}'. Did you make a typo?")
         exit(1)
-elif CHOICE != '2':
+else:
     print("Invalid selection.")
     exit(1)
 
@@ -173,46 +173,7 @@ def download_mod_files(project_info_list: list, target: str, loader: str):
         except Exception as e:
             print(f"An error occurred (while downloading {title}): {e}")
 
-def search_server_side_mods(target: str, loader: str):
-    print(f"\n--- Searching Server-Side mods for {target} and {loader} ---")
-    
-    if loader in ['fabric', 'quilt', 'forge', 'neoforge']:
-        project_type = 'mod'
-    else:
-        project_type = 'plugin'
-        
-    facets = [
-        [f'categories:{loader}'],
-        [f'versions:{target}'],
-        [f'project_type:{project_type}'],
-        ['server_side:required', 'server_side:optional']
-    ]
-    
-    url = "https://api.modrinth.com/v2/search?limit=50&facets=" + urllib.parse.quote(json.dumps(facets))
-    req = urllib.request.Request(url, headers=HEADERS)
-    
-    try:
-        with urllib.request.urlopen(req) as response:
-            res = json.loads(response.read().decode('utf-8'))
-            hits = res.get('hits', [])
-            
-            if not hits:
-                print("No matching server-side mod/plugin found.")
-                return
-                
-            print(f"\nFound results ({len(hits)} items):")
-            for hit in hits:
-                title = hit.get('title')
-                slug = hit.get('slug')
-                p_type = hit.get('project_type')
-                desc = hit.get('description', '')
-                url_link = f"https://modrinth.com/{p_type}/{slug}"
-                print(f"\n- {title}")
-                print(f"  Link: {url_link}")
-                print(f"  Info: {desc}")
-                
-    except Exception as e:
-        print(f"An error occurred during search: {e}")
+
 
 
 if __name__ == "__main__":
@@ -252,5 +213,28 @@ if __name__ == "__main__":
         else:
             print("\nNo mod matching the target version found to download.")
             
+        input("\nPress Enter to exit...")
+            
     elif CHOICE == '2':
-        search_server_side_mods(TARGET, LOADER)
+        current_files = get_current_files()
+        
+        if not current_files:
+            print("No .jar files found in the target directory.")
+        else:
+            project_ids = get_project_ids(list(current_files.keys()))
+            project_info = get_project_info(list(project_ids.values()))
+
+            print("\n--- Server-Side Mods in your folder ---")
+            found_count = 0
+            for info in project_info:
+                if info.get('server_side') in ['required', 'optional']:
+                    found_count += 1
+                    url = f"https://modrinth.com/{info.get('project_type', 'mod')}/{info.get('slug', '')}"
+                    print(f"\n- {info.get('title')} (Server-side: {info.get('server_side')})")
+                    print(f"  Link: {url}")
+                    print(f"  Info: {info.get('description', '')}")
+
+            if found_count == 0:
+                print("No server-side mods/plugins found in your folder.")
+
+        input("\nPress Enter to exit...")
